@@ -1,1 +1,1 @@
-# VizWiz-Visual-Question-Answering
+# VizWiz-VQA
