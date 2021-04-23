@@ -1,0 +1,6 @@
+{
+  "image_feat_dimension": 2048,
+  "word_feat_dimension": 300,
+  "number_of_answer_candidiates": 1046,
+  "vocabulary_size": 5861
+}
