@@ -3,7 +3,6 @@ This code is from Hengyuan Hu's repository.
 https://github.com/hengyuan-hu/bottom-up-attention-vqa
 GNU General Public License v3.0
 """
-from __future__ import print_function
 import os
 import sys
 import json
@@ -13,7 +12,7 @@ import numpy as np
 import pickle
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from dataset import Dictionary
+from utils.dataset import Dictionary
 
 
 def create_glove_embedding_init(idx2word, glove_file):

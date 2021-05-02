@@ -3,7 +3,6 @@ This code modified from Hengyuan Hu's repository.
 https://github.com/hengyuan-hu/bottom-up-attention-vqa
 GNU General Public License v3.0
 """
-from __future__ import print_function
 
 import json
 import os
@@ -12,7 +11,7 @@ import sys
 import numpy as np
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from dataset import Dictionary
+from utils.dataset import Dictionary
 
 
 def create_dictionary(dataroot):

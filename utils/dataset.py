@@ -13,9 +13,7 @@ import numpy as np
 import torch
 from torch.utils.data import Dataset
 
-COUNTING_ONLY = False
-
-MAX_QUES_SEQ_LEN = 14
+MAX_QUES_SEQ_LEN = 26
 NO_OBJECTS = 36
 
 # Following Trott et al. (ICLR 2018)
@@ -64,6 +62,7 @@ class Dictionary(object):
         sentence = (
             sentence.replace(",", "").replace("?", "").replace("'s", " 's")
         )
+
         words = sentence.split()
         tokens = []
         if add_word:
@@ -146,9 +145,7 @@ def _load_dataset(dataroot, name, img_id2val, label2ans):
             assert_eq(annotation["image"], answer["image"])
 
             img_id = _get_img_id(annotation["image"])
-            if not COUNTING_ONLY or is_howmany(
-                annotation["question"], answer, label2ans
-            ):
+            if is_howmany(annotation["question"], answer, label2ans):
                 entry = _create_entry(img_id2val[img_id], annotation, answer)
                 entries.append(entry)
 
@@ -156,9 +153,7 @@ def _load_dataset(dataroot, name, img_id2val, label2ans):
         entries = []
         for annotation in annotations:
             img_id = _get_img_id(annotation["image"])
-            if not COUNTING_ONLY or is_howmany(
-                annotation["question"], None, None
-            ):
+            if is_howmany(annotation["question"], None, None):
                 entry = _create_entry(img_id2val[img_id], annotation, None)
                 entries.append(entry)
     return entries
@@ -201,11 +196,11 @@ class VQAFeatureDataset(Dataset):
         h5_dataroot = dataroot + "/Bottom-up-features-fixed"
 
         h5_path = os.path.join(h5_dataroot, "%s%s.hdf5" % (name, "36"))
-        print("loading features from h5 file %s" % h5_path)
-        hf = h5py.File(h5_path, "r")
 
-        self.features = np.array(hf.get("image_features"))
-        self.bboxes = np.array(hf.get("image_bb"))
+        print("loading features from h5 file %s" % h5_path)
+        hf_file = h5py.File(h5_path, "r")
+        self.features = hf_file.get("image_features")
+        self.bboxes = hf_file.get("image_bb")
 
         self.entries = _load_dataset(
             dataroot, name, self.img_id2idx, self.label2ans
@@ -230,10 +225,7 @@ class VQAFeatureDataset(Dataset):
             assert_eq(len(tokens), max_length)
             entry["q_token"] = tokens
 
-    def tensorize(self, question_only=False):
-        if not question_only:
-            self.features = torch.from_numpy(self.features)
-
+    def tensorize(self):
         for entry in self.entries:
             question = torch.from_numpy(np.array(entry["q_token"]))
             entry["q_token"] = question
@@ -253,7 +245,7 @@ class VQAFeatureDataset(Dataset):
 
     def __getitem__(self, index):
         entry = self.entries[index]
-        features = self.features[entry["image"]]
+        features = torch.from_numpy(self.features[entry["image"]])
 
         question = entry["q_token"]
         image_id = entry["image_id"]
@@ -264,12 +256,7 @@ class VQAFeatureDataset(Dataset):
             target = torch.zeros(self.num_ans_candidates)
             if labels is not None:
                 target.scatter_(0, labels, scores)
-            return (
-                features,
-                torch.tensor([]),
-                question,
-                target,
-            )
+            return (features, torch.tensor([]), question, target)
         else:
             bb = torch.from_numpy(self.bboxes[entry["image"]])
             return (

@@ -23,6 +23,10 @@ class MultiLayerNet(nn.Module):
             dimensions: List of neural net layer dimensions.
             activation_fn_name: Name of nn module for the activation function.
             dropout: Probablitity of dropout for regularization.
+            add_last_activation: Determines whether or not the given activation
+                function is applied after the last linear layer. Used in case
+                a different activation function is required for the last layer.
+            bias: Determines whether or not bias is added.
         """
         super().__init__()
         if activation_fn_name:

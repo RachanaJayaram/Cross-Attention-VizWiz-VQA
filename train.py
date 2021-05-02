@@ -7,24 +7,29 @@ from typing import List, Optional
 
 import torch
 import torch.nn as nn
+from torch.autograd import Variable
 from torch.optim.lr_scheduler import LambdaLR
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
 import utils.loss_utils as loss_utils
 import utils.train_utils as train_utils
-from model.graph.position_emb import prepare_spatial_matrix
-
-from torch.autograd import Variable
 
 
 class TrainClass:
     def __init__(
-        self, model, train_configs_inp, save_folder, snapshot_path, logger
+        self,
+        model,
+        train_configs_inp,
+        save_folder,
+        final_save_name,
+        snapshot_path,
+        logger,
     ):
         self.model = model
         self.train_configs = train_configs_inp
         self.save_folder = save_folder
+        self.final_save_name = final_save_name
         self.logger = logger
         self.device = torch.device("cuda")
 
@@ -34,12 +39,8 @@ class TrainClass:
             "TRAINING PARAMETERS:\t"
             "optimizer: adamax\t"
             "base_learning_rate = %.8f,\t"
-            "decay_step = %d,\t"
-            "decay_factor = %.2f,\t"
             "grad_clip=%.2f\n",
             self.train_configs.base_learning_rate,
-            self.train_configs.decay_step,
-            self.train_configs.decay_factor,
             self.train_configs.grad_clip,
         )
 
@@ -49,6 +50,13 @@ class TrainClass:
         )
         if snapshot_path:
             self._load_model(snapshot_path)
+
+        self.rat_for_epochs = train_utils.get_reattention_tradeoff_for_epochs(
+            self.train_configs
+        )
+        self.logger.info(
+            "Reattention tradeoffs for epochs : %s", self.rat_for_epochs
+        )
 
         lr_for_epochs = train_utils.get_lr_for_epochs(self.train_configs)[
             self.train_configs.start_epoch :
@@ -66,25 +74,48 @@ class TrainClass:
             self.train_configs.start_epoch, self.train_configs.number_of_epochs
         ):
             self.logger.info(
-                "Training For Epoch: %d\tLearning rate = %.4f",
+                "Training For Epoch: %d\tLearning rate = %.4f\tReattention tradeoff = %.4f",
                 epoch,
                 self.scheduler.get_last_lr()[0],
+                self.rat_for_epochs[epoch],
             )
             epoch_start_time = time.time()
             train_size = len(train_loader.dataset)
 
             total_loss, total_attention_loss, total_score = self._train_epoch(
-                train_loader
+                train_loader, self.rat_for_epochs[epoch]
             )
 
-            # Update learning rate.
-            self.scheduler.step()
+            # Update learning rate. Skip updating in the last iteration.
+            if epoch != self.train_configs.number_of_epochs - 1:
+                self.scheduler.step()
 
             total_loss /= train_size
             total_attention_loss /= train_size
             total_score = 100 * total_score / train_size
             eval_score = 0
 
+            self.logger.info(
+                "epoch %d,\t"
+                "train_size: %d,\t"
+                "time: %.2f,\t"
+                "train_loss: %.2f\t"
+                "attention_loss: %.4f\n"
+                "SCORE: %.4f\n\n",
+                epoch,
+                train_size,
+                time.time() - epoch_start_time,
+                total_loss,
+                total_attention_loss,
+                total_score,
+            )
+
+            if epoch == self.train_configs.number_of_epochs - 1:
+                self.logger.info("Saving model as %s", "final.pth")
+                model_path = os.path.join(self.save_folder, "final")
+                train_utils.save_model(
+                    model_path, self.model, self.optimizer, epoch, total_score
+                )
             if (
                 eval_loader
                 and total_score > self.train_configs.save_score_threshold
@@ -93,32 +124,15 @@ class TrainClass:
                 self.logger.info("Threshold reached. Evaluating..")
                 eval_score, _ = evaluate(self.model, eval_loader)
                 self.model.train(True)
+                self.logger.info("EVAL SCORE : %.4f\n\n", eval_score * 100)
+                self._save_model_if_eligible(epoch, eval_score * 100)
 
-            self.logger.info(
-                "epoch %d,\t"
-                "train_size: %d,\t"
-                "time: %.2f,\t"
-                "train_loss: %.2f\t\n"
-                "SCORE: %.4f\t"
-                "EVAL SCORE : %.4f\t"
-                "ATT_LOSS: %.4f\n\n",
-                epoch,
-                train_size,
-                time.time() - epoch_start_time,
-                total_loss,
-                total_score,
-                eval_score * 100,
-                total_attention_loss,
-            )
-
-            self._save_model_if_eligible(epoch, total_score)
-
-    def _train_epoch(self, train_loader):
+    def _train_epoch(self, train_loader, reattention_tradeoff):
         total_loss = 0
         total_score = 0
         total_attention_loss = 0
 
-        for _, (image_features, _, question, labels,) in enumerate(
+        for _, (image_features, _, question, labels) in enumerate(
             tqdm(
                 train_loader,
                 total=len(train_loader),
@@ -138,7 +152,7 @@ class TrainClass:
                 self.model.module.reattention_added(),
                 v_att,
                 v_re_att,
-                2,
+                reattention_tradeoff,
             )
 
             # Clearing old gradients.
@@ -171,11 +185,7 @@ class TrainClass:
         self.train_configs.start_epoch = model_data["epoch"] + 1
 
     def _save_model_if_eligible(self, epoch, total_score):
-        print()
-        if (
-            total_score >= self.train_configs.save_score_threshold
-            and epoch % self.train_configs.save_step == 0
-        ):
+        if total_score >= 49.8 and epoch % self.train_configs.save_step == 0:
             save_name = "model_epoch{0}_score_{1}.pth".format(
                 epoch, int(total_score)
             )
@@ -192,11 +202,17 @@ def train(
     train_loader: DataLoader,
     eval_loader: DataLoader,
     save_folder: str,
+    final_save_name: str,
     snapshot_path: Optional[str],
     logger: logging.Logger,
 ):
     train_obj = TrainClass(
-        model, train_configs, save_folder, snapshot_path, logger
+        model,
+        train_configs,
+        save_folder,
+        final_save_name,
+        snapshot_path,
+        logger,
     )
     train_obj.train(train_loader, eval_loader)
 

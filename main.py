@@ -5,7 +5,7 @@ import json
 import torch
 import torch.nn as nn
 from absl import app
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, ConcatDataset
 
 import utils.dataset as dataset
 import utils.train_utils as train_utils
@@ -32,25 +32,28 @@ def main(_):
         base_learning_rate=FLAGS.base_learning_rate,
         warmup_length=FLAGS.warmup_length,
         warmup_factor=FLAGS.warmup_factor,
-        decay_factor=FLAGS.decay_factor,
-        decay_start=FLAGS.decay_start,
+        lr_decay_factor=FLAGS.lr_decay_factor,
+        lr_decay_start=FLAGS.lr_decay_start,
+        ra_decay_factor=FLAGS.ra_decay_factor,
+        ra_decay_start=FLAGS.ra_decay_start,
         decay_step=FLAGS.decay_step,
         save_score_threshold=FLAGS.save_score_threshold,
         save_step=FLAGS.save_step,
         grad_clip=FLAGS.grad_clip,
+        reattention_tradeoff=FLAGS.reattention_tradeoff,
     )
 
     model_params = ModelParams(
         add_reattention=FLAGS.add_reattention,
-        add_graph_attention=FLAGS.add_graph_attention,
+        fusion_method=FLAGS.fusion_method,
         question_sequence_length=dataset.MAX_QUES_SEQ_LEN,
         number_of_objects=dataset.NO_OBJECTS,
         word_embedding_dimension=data_params["word_feat_dimension"],
         object_embedding_dimension=data_params["image_feat_dimension"],
-        attention_heads=FLAGS.attention_heads,
         vocabulary_size=data_params["vocabulary_size"],
         num_ans_candidates=data_params["number_of_answer_candidiates"],
     )
+    logger.info("Model params:\t%s\n", model_params)
 
     model = VQAModel(
         glove_path=FLAGS.glove_path,
@@ -59,28 +62,36 @@ def main(_):
     ).cuda()
     model = nn.DataParallel(model).cuda()
 
-    # train_dset = dataset.VQAFeatureDataset(
-    #     name="train",
-    #     dictionary=dictionary,
-    # )
-    # train_loader = DataLoader(
-    #     train_dset,
-    #     train_configs.batch_size,
-    #     shuffle=True,
-    #     num_workers=1,
-    # )
-    eval_dset = dataset.VQAFeatureDataset("val", dictionary)
-    eval_loader = DataLoader(
-        eval_dset, FLAGS.batch_size, shuffle=True, num_workers=1
+    train_dset = dataset.VQAFeatureDataset(
+        name="train",
+        dictionary=dictionary,
     )
-    # eval_loader = None
+
+    eval_dset = dataset.VQAFeatureDataset("val", dictionary)
+
+    if FLAGS.use_train_and_val:
+        train_dset = ConcatDataset([train_dset, eval_dset])
+        eval_loader = None
+
+    else:
+        eval_loader = DataLoader(
+            eval_dset, FLAGS.batch_size, shuffle=True, num_workers=1
+        )
+
+    train_loader = DataLoader(
+        train_dset,
+        train_configs.batch_size,
+        shuffle=True,
+        num_workers=1,
+    )
 
     train(
         model,
         train_configs,
+        train_loader,
         eval_loader,
-        None,
         FLAGS.save_folder,
+        FLAGS.final_save_name,
         FLAGS.snapshot_path,
         logger,
     )

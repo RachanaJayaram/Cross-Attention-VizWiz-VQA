@@ -27,12 +27,11 @@ def main(_):
 
     model_params = ModelParams(
         add_reattention=FLAGS.add_reattention,
-        add_graph_attention=FLAGS.add_graph_attention,
+        fusion_method=FLAGS.fusion_method,
         question_sequence_length=dataset.MAX_QUES_SEQ_LEN,
         number_of_objects=dataset.NO_OBJECTS,
         word_embedding_dimension=data_params["word_feat_dimension"],
         object_embedding_dimension=data_params["image_feat_dimension"],
-        attention_heads=FLAGS.attention_heads,
         vocabulary_size=data_params["vocabulary_size"],
         num_ans_candidates=data_params["number_of_answer_candidiates"],
     )

@@ -28,6 +28,7 @@ class WordEmbedding(nn.Module):
         vocabulary_size: int,
         pretrained_vectors_file: str,
         embedding_dimension: int = 300,
+        dropout: float = 0.0,
     ):
         """Initializes WordEmbedding.
 
@@ -50,6 +51,8 @@ class WordEmbedding(nn.Module):
             padding_idx=vocabulary_size,
         )
 
+        self.dropout = nn.Dropout(dropout)
+
         # Ensures that the word vectors are fine tuned to the VQA task during
         # training.
         self.embedding_lookup.weight.requires_grad = True
@@ -59,7 +62,7 @@ class WordEmbedding(nn.Module):
 
     def forward(self, inp):
         """Defines the computation performed at every call."""
-        return self.embedding_lookup(inp)
+        return self.dropout(self.embedding_lookup(inp))
 
 
 class QuestionEmbedding(nn.Module):

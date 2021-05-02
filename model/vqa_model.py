@@ -7,7 +7,7 @@ from model.classification import Classifier
 from model.fusion import calculate_similarity_matrix
 from model.multi_layer_net import MultiLayerNet
 from model.question_embedding import QuestionEmbedding, WordEmbedding
-from model.graph.relation_encoder import RelationEncoder
+from utils.flags import FusionMethod
 
 
 @attr.s
@@ -16,8 +16,8 @@ class ModelParams:
 
     Attributes:
         add_reattention(bool): Reattention will be performed if set to true.
-        add_graph_attention(bool): Graph attention will be performed if set to
-            true.
+        fusion_method(FusionMethod): Determines how the joint representation is
+            obtained.
         question_sequence_length(int): Number of tokens in the question.
         number_of_objects (int): Number of objects in the image embedding.
         word_embedding_dimension (int): Dimension of word embedding.
@@ -27,13 +27,12 @@ class ModelParams:
     """
 
     add_reattention: bool = attr.ib()
-    add_graph_attention: bool = attr.ib()
+    fusion_method: FusionMethod = attr.ib()
     question_sequence_length: int = attr.ib()
     number_of_objects: int = attr.ib()
     word_embedding_dimension: int = attr.ib()
     object_embedding_dimension: int = attr.ib()
     vocabulary_size: int = attr.ib()
-    attention_heads: int = attr.ib()
     num_ans_candidates: int = attr.ib()
 
 
@@ -50,6 +49,7 @@ class VQAModel(nn.Module):
             vocabulary_size=model_params.vocabulary_size,
             pretrained_vectors_file=glove_path,
             embedding_dimension=model_params.word_embedding_dimension,
+            dropout=0.25,
         )
         self.question_embedding_net = QuestionEmbedding(
             input_dimension=model_params.word_embedding_dimension,
@@ -57,45 +57,46 @@ class VQAModel(nn.Module):
             number_of_layers=1,
         )
 
-        self.relation_net = None
-        if model_params.add_graph_attention:
-            self.relation_net = RelationEncoder(
-                model_params.object_embedding_dimension,
-                hidden_dimension,
-                hidden_dimension,
-                model_params.attention_heads,
-            )
-
         self.question_projection_net = MultiLayerNet(
-            dimensions=[hidden_dimension, hidden_dimension], dropout=0.2
+            dimensions=[hidden_dimension, hidden_dimension], dropout=0.5
         )
         self.image_projection_net = MultiLayerNet(
             dimensions=[
                 model_params.object_embedding_dimension,
                 hidden_dimension,
             ],
-            dropout=0.2,
-        )
-
-        self.question_attention_net = Attention(model_params.number_of_objects)
-        self.visual_attention_net = Attention(
-            model_params.question_sequence_length
-        )
-
-        self.answer_projection_net = MultiLayerNet(
-            dimensions=[hidden_dimension * 2, hidden_dimension], dropout=0.2
-        )
-        self.classifier = Classifier(
-            input_dimension=hidden_dimension,
-            hidden_dimension=2 * hidden_dimension,
-            output_dimension=model_params.num_ans_candidates,
             dropout=0.5,
         )
+
+        self.question_attention_net = Attention(
+            model_params.number_of_objects, dropout=0.3
+        )
+        self.visual_attention_net = Attention(
+            model_params.question_sequence_length, dropout=0.3
+        )
+
+        if model_params.fusion_method == FusionMethod.CONCAT:
+            self.classifier = Classifier(
+                input_dimension=hidden_dimension * 2,
+                hidden_dimension=hidden_dimension * 4,
+                output_dimension=model_params.num_ans_candidates,
+                dropout=0.5,
+            )
+        elif model_params.fusion_method == FusionMethod.HADAMARD:
+            self.classifier = Classifier(
+                input_dimension=hidden_dimension,
+                hidden_dimension=hidden_dimension * 2,
+                output_dimension=model_params.num_ans_candidates,
+                dropout=0.5,
+            )
 
         self.reattention_net = None
         if model_params.add_reattention:
             self.reattention_net = ReAttention(
-                hidden_dimension, model_params.number_of_objects
+                hidden_dimension,
+                model_params.number_of_objects,
+                self.model_params.fusion_method,
+                0.3,
             )
 
     def reattention_added(self):
@@ -109,25 +110,15 @@ class VQAModel(nn.Module):
         attended_vector = (attention_weights * feature_vector).sum(1)
         return attended_vector, attention_weights
 
-    def forward(self, v, q, spa_adj_matrix=None):
-        """Forward
-        v: [batch, num_objs, obj_dim]
-        b: [batch, num_objs, b_dim]
-        q: [batch_size, seq_length]
-        return: logits, not probs
-        """
+    def forward(self, v, q):
+        """Forward."""
         word_embedding = self.word_embedding_net(q)
         question_embedding = self.question_embedding_net(word_embedding)
         proj_question_embedding = self.question_projection_net(
             question_embedding
         )
 
-        if self.model_params.add_graph_attention:
-            proj_image_embedding = self.relation_net(
-                v, proj_question_embedding, spa_adj_matrix
-            )
-        else:
-            proj_image_embedding = self.image_projection_net(v)
+        proj_image_embedding = self.image_projection_net(v)
 
         similarity_matrix = calculate_similarity_matrix(
             proj_image_embedding, proj_question_embedding
@@ -146,13 +137,15 @@ class VQAModel(nn.Module):
         )
         attended_image_embedding, visual_attention_weights = att_return_values
 
-        joint_representation = torch.cat(
-            (attended_question_embedding, attended_image_embedding), dim=1
-        )
-        proj_joint_representation = self.answer_projection_net(
-            joint_representation
-        )
-        logits = self.classifier(proj_joint_representation)
+        if self.model_params.fusion_method == FusionMethod.CONCAT:
+            joint_representation = torch.cat(
+                (attended_image_embedding, attended_question_embedding), dim=1
+            )
+        elif self.model_params.fusion_method == FusionMethod.HADAMARD:
+            joint_representation = (
+                attended_image_embedding * attended_question_embedding
+            )
+        logits = self.classifier(joint_representation)
 
         visual_re_attention_weights = None
         if self.model_params.add_reattention:

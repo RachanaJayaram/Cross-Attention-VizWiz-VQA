@@ -96,7 +96,9 @@ def calculate_loss(
             Trade-off for the strength of answer guidance.
 
     Returns:
-        Overall loss.
+        A tuple.
+        The first element is the joint loss.
+        The second element is the attention consistency loss
     """
     return classification_loss(logits, labels) + (
         reattention_factor

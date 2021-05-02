@@ -192,16 +192,7 @@ punct = [
 # Notice that VQA score is the average of 10 choose 9 candidate answers cases
 # See http://visualqa.org/evaluation.html
 def get_score(occurences):
-    if occurences == 0:
-        return 0.0
-    elif occurences == 1:
-        return 0.3
-    elif occurences == 2:
-        return 0.6
-    elif occurences == 3:
-        return 0.9
-    else:
-        return 1.0
+    return min(0.33333 * occurences, 1)
 
 
 def process_punctuation(inText):
@@ -256,6 +247,7 @@ def filter_answers(answers_dset, min_occurence):
             if answer not in occurence:
                 occurence[answer] = set()
             occurence[answer].add(ans_entry["question_id"])
+
     for answer in list(occurence):
         if len(occurence[answer]) < min_occurence:
             occurence.pop(answer)
@@ -304,10 +296,12 @@ def compute_target(answers_dset, ans2label, name, cache_root="data/cache"):
 
         labels = []
         scores = []
+        occurences = []
         for answer in answer_count:
             if answer not in ans2label:
                 continue
             labels.append(ans2label[answer])
+            occurences.append(answer_count[answer])
             score = get_score(answer_count[answer])
             scores.append(score)
 
@@ -317,6 +311,7 @@ def compute_target(answers_dset, ans2label, name, cache_root="data/cache"):
                 "image": ans_entry["image"],
                 "labels": labels,
                 "scores": scores,
+                "occurances": occurences,
             }
         )
 
@@ -363,13 +358,8 @@ if __name__ == "__main__":
     val_answers_dset = get_answers_dset(VAL_FILE, "val")
 
     answers = train_answers_dset + val_answers_dset
-    occurence = filter_answers(answers, 9)
+    occurence = filter_answers(answers, 4)
 
-    CACHE_PATH = "data/cache/trainval_ans2label.pkl"
-    if os.path.isfile(CACHE_PATH):
-        print("found %s" % CACHE_PATH)
-        ans2label = pickle.load(open(CACHE_PATH, "rb"))
-    else:
-        ans2label = create_ans2label(occurence, "trainval")
+    ans2label = create_ans2label(occurence, "trainval")
     compute_target(train_answers_dset, ans2label, "train")
     compute_target(val_answers_dset, ans2label, "val")

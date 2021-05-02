@@ -16,7 +16,6 @@ from tqdm import tqdm
 import utils.dataset as dataset
 import utils.loss_utils as loss_utils
 import utils.train_utils as train_utils
-from model.graph.position_emb import prepare_spatial_matrix
 from model.vqa_model import ModelParams, VQAModel
 from utils.dataset import Dictionary, VQAFeatureDataset
 from utils.flags import FLAGS
@@ -76,7 +75,7 @@ def make_json(logits, im_ids, dataloader):
         result = {}
         if len(im_ids[i]) == 0:
             continue
-        result["image_id"] = im_ids[i]
+        result["image"] = im_ids[i] + ".jpg"
         result["answer"] = get_answer(logits[i], dataloader)
         results.append(result)
     return results
@@ -96,12 +95,11 @@ def main(_):
 
     model_params = ModelParams(
         add_reattention=FLAGS.add_reattention,
-        add_graph_attention=FLAGS.add_graph_attention,
+        fusion_method=FLAGS.fusion_method,
         question_sequence_length=dataset.MAX_QUES_SEQ_LEN,
         number_of_objects=dataset.NO_OBJECTS,
         word_embedding_dimension=data_params["word_feat_dimension"],
         object_embedding_dimension=data_params["image_feat_dimension"],
-        attention_heads=FLAGS.attention_heads,
         vocabulary_size=data_params["vocabulary_size"],
         num_ans_candidates=data_params["number_of_answer_candidiates"],
     )
@@ -122,7 +120,6 @@ def main(_):
 
     def process(model, eval_loader):
         model_path = FLAGS.snapshot_path
-        model_path = "/home/rachana/Documents/vizwiz/save_folder/first/model_epoch10_score_39.pth"
         print("loading %s" % model_path)
 
         model_data = torch.load(model_path)

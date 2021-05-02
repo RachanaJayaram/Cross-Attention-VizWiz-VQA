@@ -34,6 +34,7 @@ class Classifier(nn.Module):
 
         Args:
             input_dimension: The input dimension of the input.
+            hidden_dimension: The dimension of the intermediate hidden layer.
             output_dimension: The required dimension for the output.
             dropout: Probability of dropout for regularization.
         """
