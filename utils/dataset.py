@@ -16,22 +16,6 @@ from torch.utils.data import Dataset
 MAX_QUES_SEQ_LEN = 26
 NO_OBJECTS = 36
 
-# Following Trott et al. (ICLR 2018)
-#   Interpretable Counting for Visual Question Answering
-def is_howmany(q, a, label2ans):
-    if (
-        "how many" in q.lower()
-        or ("number of" in q.lower() and "number of the" not in q.lower())
-        or "amount of" in q.lower()
-        or "count of" in q.lower()
-    ):
-        if a is None or answer_filter(a, label2ans):
-            return True
-        else:
-            return False
-    else:
-        return False
-
 
 def answer_filter(answers, label2ans, max_num=10):
     for ans in answers["labels"]:
@@ -145,17 +129,15 @@ def _load_dataset(dataroot, name, img_id2val, label2ans):
             assert_eq(annotation["image"], answer["image"])
 
             img_id = _get_img_id(annotation["image"])
-            if is_howmany(annotation["question"], answer, label2ans):
-                entry = _create_entry(img_id2val[img_id], annotation, answer)
-                entries.append(entry)
+            entry = _create_entry(img_id2val[img_id], annotation, answer)
+            entries.append(entry)
 
     else:  # test
         entries = []
         for annotation in annotations:
             img_id = _get_img_id(annotation["image"])
-            if is_howmany(annotation["question"], None, None):
-                entry = _create_entry(img_id2val[img_id], annotation, None)
-                entries.append(entry)
+            entry = _create_entry(img_id2val[img_id], annotation, None)
+            entries.append(entry)
     return entries
 
 

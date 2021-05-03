@@ -13,7 +13,7 @@ FLAGS = flags.FLAGS
 
 flags.DEFINE_string(
     "save_folder",
-    "save_folder/reattention_concat_final_new2",
+    "save_folder/final_model",
     "Folder where trained model will be saved.",
 )
 flags.DEFINE_string(
@@ -53,7 +53,7 @@ flags.DEFINE_float(
 )
 flags.DEFINE_bool(
     "add_reattention",
-    True,
+    False,
     "Determines whether reattention should be performed.",
 )
 
@@ -64,7 +64,7 @@ flags.DEFINE_enum_class(
     "Fusion method for joint representation.",
 )
 flags.DEFINE_bool(
-    "use_train_and_val", False, "Use both train and val for training."
+    "use_train_and_val", True, "Use both train and val for training."
 )
 
 flags.DEFINE_integer("seed", 1204, "Random seed.")

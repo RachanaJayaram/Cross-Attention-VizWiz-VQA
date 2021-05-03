@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Visual Question Answering</title>
+
+    <link rel='stylesheet' href='https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css'
+        integrity='sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO' crossorigin='anonymous'>
+    <link rel='stylesheet' href='https://use.fontawesome.com/releases/v5.3.1/css/all.css'
+        integrity='sha384-mzrmE5qonljUremFsqc01SB46JvROS7bZs3IO2EmfFsd15uHvIt+Y8vEf7N7fWAU' crossorigin='anonymous'>
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <link href="https://fonts.googleapis.com/css2?family=News+Cycle:wght@700&family=Nunito:wght@300&display=swap"
+        rel="stylesheet">
+    <script src="{{url_for('static',filename='jquery.js')}}"></script>
+
+    <link rel='stylesheet' type='text/css' href="{{url_for('static',filename='style.css')}}">
+</head>
+
+<body>
+    <script>
+        function loadImg() {
+            var img_id = document.getElementById('img_id').value;
+            $('#img-header').text('COCO Image ID: ' + img_id);
+            $('#input-image').attr('src', "{{url_for('static', filename = 'img/')}}" + img_id);
+        }
+
+
+        $(function () {
+            $('#ques_btn').click(function () {
+                var sendInfo = {
+                    question: document.getElementById('question_inp').value,
+                    img_id: '{{img_id}}'
+                };
+                $.ajax({
+                    url: '/getAnswer',
+                    dataType: 'json',
+                    data: sendInfo,
+                    type: 'POST',
+                    success: function (response) {
+                        console.log(response);
+                        $('#att-map').attr("src", response["att_map_url"] + "?timestamp=" + new Date().getTime());
+
+                        var words = response['question_map']
+                        $('#question-map').html($.map(words, function (w) {
+                            return '<span style="background-color:hsl(150,100%,' + ((1-w.attention) * 50 + 50) + '%)">' + w.word + ' </span>'
+                        }))
+
+                        $('#models').empty();
+                        $('#question-header').text(response['question']);
+                        for (i in response['model_answers']) {
+                            model = response['model_answers'][i];
+                            var model_box = document.createElement('div');
+                            model_box.className = "model-box";
+
+                            var model_name = document.createElement('b');
+                            model_name.innerText = model['name'];
+                            model_name.className = "model-name";
+
+                            var model_accuracy = document.createElement('div');
+                            model_accuracy.innerText = 'Accuracy: ' + model['acc'];
+                            model_accuracy.className = "model-accuracy";
+
+                            var model_answer = document.createElement('div');
+                            model_answer.innerText = model['answer'];
+                            model_answer.className = "model-answer";
+
+                            model_box.appendChild(model_name);
+                            model_box.appendChild(model_accuracy);
+                            model_box.appendChild(model_answer);
+
+                            $('#models').append(model_box);
+                        }
+                    },
+                    error: function (error) {
+                        alert(error.message);
+                        console.log(error);
+
+                    }
+                });
+            });
+        });
+
+    </script>
+    <div style='background-color:rgb(53, 53, 53); opacity:0.9;align-content: center;color: whitesmoke' height='100px'>
+        <h1 style='text-align: center; padding: 8px;'>Visual Question Answering</h1>
+    </div>
+    <div style='background-color:white; opacity:0.9;align-content: center;text-align: center'>
+        <form method='POST' action='/VqaQuery' name='img_form' style='background-color: #def2f8;padding-bottom: 3px'
+            role='form'>
+            <br>
+            Enter Input Image ID:&emsp;
+            <input id='img_id' name='img_id' type='text' placeholder='Enter path of the input file'>
+            &emsp;
+            <button class='btn' id='img_btn'> Load Image</button>
+            <br>
+            <br>
+
+        </form>
+    </div>
+    <div class='container-fluid' id='' style='background-color: whitesmoke'>
+        <div class='row'>
+            <div class='col-sm-6' id='img-div'>
+                <h6 style='text-align: center' id='img-header'>COCO Image ID: {{img_id}}</h6>
+                <img src='{{img_url}}' , alt='Input image to be loaded...' , id='input-image', class='center', style='max-width: 100%;'>
+            </div>
+            <div class='col-sm-6' id='img-div' , style='align-content: center; align-items: center;'>
+                <p id='question_div' style='align-items: center;text-align: center;align-content: center;'>
+                    Enter question: &emsp;
+                    <input id='question_inp' name='question' type='text' style='width: 40%;'
+                        placeholder='Enter a question about the image.'>
+                    &emsp;
+                    <button class='btn' id='ques_btn'> Get Answer</button>
+                    <br>
+                </p>
+                <hr>
+                <h6 style='text-align: center'>Question entered:</h6>
+                <h4 style='text-align: center' id='question-header'></h4>
+                <hr>
+                <h6 style='text-align: center'>Answers</h6>
+                <div id='models'>
+
+                </div>
+            </div>
+        </div>
+        <div class='row'>
+            <div class='col-sm-6' id='img-div'>
+                <h6 style='text-align: center' id='img-header'>Image attention Map</h6>
+                <img alt='Input image to be loaded...' , id='att-map' class='center' style='max-width: 100%;'>
+            </div>
+            <div class='col-sm-6' id='img-div' , style='align-content: center; align-items: center;'>
+                <h6 style='text-align: center' id='img-header'>Question attention Map</h6>
+                <div id='question-map' style='font-size: 60px;align-items: center;text-align: center;align-content: center;'>
+                </div>
+            </div>
+        </div>
+</body>
+
+</html>
