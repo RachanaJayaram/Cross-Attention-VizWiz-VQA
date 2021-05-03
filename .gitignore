@@ -1,8 +1,4 @@
 __pycache__
 save_folder/
 data/
-demo/predict.py
-demo/visualize.py
-demo/demo_dataset.py
-demo/back_end_server.py
 front_end/static/
