@@ -11,3 +11,6 @@ Training the model:
 ```
 python main.py
 ```
+___
+References:
+[1]	Guo, W., Zhang, Y., Wu, X., Yang, J., Cai, X., & Yuan, X. (2020). Re-Attention for Visual Question Answering. AAAI.
