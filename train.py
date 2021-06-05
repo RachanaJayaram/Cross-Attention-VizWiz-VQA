@@ -116,6 +116,7 @@ class TrainClass:
                 train_utils.save_model(
                     model_path, self.model, self.optimizer, epoch, total_score
                 )
+            self._save_model_if_eligible(epoch, total_score)
             if (
                 eval_loader
                 and total_score > self.train_configs.save_score_threshold
@@ -125,7 +126,6 @@ class TrainClass:
                 eval_score, _ = evaluate(self.model, eval_loader)
                 self.model.train(True)
                 self.logger.info("EVAL SCORE : %.4f\n\n", eval_score * 100)
-                self._save_model_if_eligible(epoch, eval_score * 100)
 
     def _train_epoch(self, train_loader, reattention_tradeoff):
         total_loss = 0
@@ -185,7 +185,7 @@ class TrainClass:
         self.train_configs.start_epoch = model_data["epoch"] + 1
 
     def _save_model_if_eligible(self, epoch, total_score):
-        if total_score >= 49.8 and epoch % self.train_configs.save_step == 0:
+        if total_score >= 75 and epoch % self.train_configs.save_step == 0:
             save_name = "model_epoch{0}_score_{1}.pth".format(
                 epoch, int(total_score)
             )

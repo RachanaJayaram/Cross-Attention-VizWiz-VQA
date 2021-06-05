@@ -2,7 +2,7 @@ import attr
 import torch
 import torch.nn as nn
 
-from model.attention import Attention, ReAttention
+from model.attention import Attention, ReAttention, SelfAttention
 from model.classification import Classifier
 from model.fusion import calculate_similarity_matrix
 from model.multi_layer_net import MultiLayerNet
@@ -26,6 +26,7 @@ class ModelParams:
         num_ans_candidates (int): Number of answer candiadates considered.
     """
 
+    add_self_attention: bool = attr.ib()
     add_reattention: bool = attr.ib()
     fusion_method: FusionMethod = attr.ib()
     question_sequence_length: int = attr.ib()
@@ -68,6 +69,14 @@ class VQAModel(nn.Module):
             dropout=0.5,
         )
 
+        if self.model_params.add_self_attention:
+            self.question_self_attention_net = SelfAttention(
+                hidden_dimension, dropout=0.3
+            )
+            self.visual_self_attention_net = SelfAttention(
+                hidden_dimension, dropout=0.3
+            )
+
         self.question_attention_net = Attention(
             model_params.number_of_objects, dropout=0.3
         )
@@ -76,8 +85,9 @@ class VQAModel(nn.Module):
         )
 
         if model_params.fusion_method == FusionMethod.CONCAT:
+            factor = 3 if self.model_params.add_self_attention else 2
             self.classifier = Classifier(
-                input_dimension=hidden_dimension * 2,
+                input_dimension=hidden_dimension * 3,
                 hidden_dimension=hidden_dimension * 4,
                 output_dimension=model_params.num_ans_candidates,
                 dropout=0.5,
@@ -104,9 +114,9 @@ class VQAModel(nn.Module):
         return self.model_params.add_reattention
 
     def _get_attented_features(
-        self, similarity_matrix, attention_layer, feature_vector
+        self, attention_input, attention_layer, feature_vector
     ):
-        attention_weights = attention_layer(similarity_matrix)
+        attention_weights = attention_layer(attention_input)
         attended_vector = (attention_weights * feature_vector).sum(1)
         return attended_vector, attention_weights
 
@@ -119,6 +129,25 @@ class VQAModel(nn.Module):
         )
 
         proj_image_embedding = self.image_projection_net(v)
+
+        if self.model_params.add_self_attention:
+            (
+                self_attended_image_embedding,
+                visual_attention_weights,
+            ) = self._get_attented_features(
+                proj_image_embedding,
+                self.visual_self_attention_net,
+                proj_image_embedding,
+            )
+
+            (
+                self_attended_question_embedding,
+                question_attention_weights,
+            ) = self._get_attented_features(
+                proj_question_embedding,
+                self.question_self_attention_net,
+                proj_question_embedding,
+            )
 
         similarity_matrix = calculate_similarity_matrix(
             proj_image_embedding, proj_question_embedding
@@ -133,14 +162,36 @@ class VQAModel(nn.Module):
             proj_question_embedding,
         )
         att_return_values = self._get_attented_features(
-            similarity_matrix, self.visual_attention_net, proj_image_embedding
+            similarity_matrix,
+            self.visual_attention_net,
+            proj_image_embedding,
         )
-        attended_image_embedding, visual_attention_weights = att_return_values
+        (
+            attended_image_embedding,
+            visual_attention_weights,
+        ) = att_return_values
 
         if self.model_params.fusion_method == FusionMethod.CONCAT:
-            joint_representation = torch.cat(
-                (attended_image_embedding, attended_question_embedding), dim=1
+            joint_representation = (
+                torch.cat(
+                    (
+                        # self_attended_image_embedding,
+                        attended_image_embedding,
+                        self_attended_question_embedding,
+                        attended_question_embedding,
+                    ),
+                    dim=1,
+                )
+                if self.model_params.add_self_attention
+                else torch.cat(
+                    (
+                        attended_image_embedding,
+                        attended_question_embedding,
+                    ),
+                    dim=1,
+                )
             )
+
         elif self.model_params.fusion_method == FusionMethod.HADAMARD:
             joint_representation = (
                 attended_image_embedding * attended_question_embedding

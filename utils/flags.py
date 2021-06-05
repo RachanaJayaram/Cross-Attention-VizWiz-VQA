@@ -52,6 +52,11 @@ flags.DEFINE_float(
     "The default rate at which weights are updated during training.",
 )
 flags.DEFINE_bool(
+    "add_self_attention",
+    True,
+    "Add self attention instead of Cross attention.",
+)
+flags.DEFINE_bool(
     "add_reattention",
     False,
     "Determines whether reattention should be performed.",
@@ -69,7 +74,7 @@ flags.DEFINE_bool(
 
 flags.DEFINE_integer("seed", 1204, "Random seed.")
 flags.DEFINE_integer("hidden_dimension", 1024, "Dimension of hidden states.")
-flags.DEFINE_integer("number_of_epochs", 60, "Number of epochs for training.")
+flags.DEFINE_integer("number_of_epochs", 70, "Number of epochs for training.")
 flags.DEFINE_float("reattention_tradeoff", 0.5, "Reattention tradeoff.")
 
 flags.DEFINE_integer(
@@ -106,12 +111,12 @@ flags.DEFINE_float(
 
 flags.DEFINE_float(
     "save_score_threshold",
-    0,
+    75,
     "Threshold for model score after which the models are saved.",
 )
 flags.DEFINE_integer(
     "save_step",
-    1,
+    2,
     "Determines epochs (by modulo) for which the model is saved after the "
     "score threshold is reached.",
 )

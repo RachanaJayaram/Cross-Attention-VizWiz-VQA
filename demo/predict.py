@@ -28,14 +28,15 @@ class Inference:
     def _load_model(self):
         data_params = json.load(open(FLAGS.data_params_path))
         model_params = ModelParams(
+            add_self_attention=FLAGS.add_self_attention,
             add_reattention=FLAGS.add_reattention,
+            fusion_method=FLAGS.fusion_method,
             question_sequence_length=dataset.MAX_QUES_SEQ_LEN,
             number_of_objects=dataset.NO_OBJECTS,
             word_embedding_dimension=data_params["word_feat_dimension"],
             object_embedding_dimension=data_params["image_feat_dimension"],
             vocabulary_size=data_params["vocabulary_size"],
             num_ans_candidates=data_params["number_of_answer_candidiates"],
-            fusion_method=FLAGS.fusion_method,
         )
         model = VQAModel(
             glove_path=FLAGS.glove_path,
@@ -43,7 +44,7 @@ class Inference:
             hidden_dimension=FLAGS.hidden_dimension,
         ).cuda()
         FLAGS.snapshot_path = (
-            "/home/rachana/Documents/vizwiz/save_folder/final_model/final"
+            "/home/rachana/Documents/vizwiz/save_folder/self_cross_3/50"
         )
         model_path = FLAGS.snapshot_path
         print("loading %s" % model_path)
