@@ -26,10 +26,6 @@ class TrainingConfigs:  # pylint: disable=too-few-public-methods
         warmup_factor (float): Factor by which lr is multiplied.
         lr_decay_factor (float): Decay factor at which the lr is reduced.
         lr_decay_start (int): Epoch at which learning rate decay should start.
-        ra_decay_factor (float): Decay factor at which the reattention tradeoff
-            is reduced.
-        ra_decay_start (int): Epoch at which reattention_tradeoff decay should
-            start.
         decay_step (int): Determines epochs for which decay is skipped.
         save_score_threshold (float): Threshold for model score after which
             the models are saved.
@@ -46,57 +42,10 @@ class TrainingConfigs:  # pylint: disable=too-few-public-methods
     warmup_factor: float = attr.ib()
     lr_decay_factor: float = attr.ib()
     lr_decay_start: int = attr.ib()
-    ra_decay_factor: float = attr.ib()
-    ra_decay_start: int = attr.ib()
     decay_step: int = attr.ib()
     save_score_threshold: float = attr.ib()
     save_step: int = attr.ib()
     grad_clip: float = attr.ib(default=0.25)
-    reattention_tradeoff: int = attr.ib(default=0.8)
-
-
-def get_reattention_tradeoff_for_epochs(
-    training_configs: TrainingConfigs,
-) -> List[float]:
-    warmup_tradeoffs = [0.01 * i for i in range(0, 10)]
-    # warmup_tradeoffs = [0.01 * i for i in range(0, 51)]
-    # rampup_tradeoffs = []
-    rampup_tradeoffs = list()
-    for i in range(1, int(training_configs.reattention_tradeoff / 0.1)):
-        rampup_tradeoffs.extend([0.1 * i] * 3)
-    # rampup_tradeoffs = [
-    #     0.1 * i
-    #     for i in range(1, int(training_configs.reattention_tradeoff / 0.1))
-    # ]
-    _decay_epochs = list(
-        range(
-            training_configs.ra_decay_start,
-            training_configs.number_of_epochs,
-            training_configs.decay_step,
-        )
-    )
-    decay_tradeoffs = list()
-    current_tradeoff = training_configs.reattention_tradeoff
-    for _epoch_i in range(
-        training_configs.ra_decay_start, training_configs.number_of_epochs
-    ):
-        if _epoch_i in _decay_epochs:
-            current_tradeoff *= training_configs.ra_decay_factor
-        decay_tradeoffs.append(current_tradeoff)
-    reattention_tradeoff_list = list()
-    reattention_tradeoff_list.extend(warmup_tradeoffs)
-    reattention_tradeoff_list.extend(rampup_tradeoffs)
-    reattention_tradeoff_list.extend(
-        [training_configs.reattention_tradeoff]
-        * (
-            training_configs.number_of_epochs
-            - len(warmup_tradeoffs)
-            - len(rampup_tradeoffs)
-            - len(decay_tradeoffs)
-        )
-    )
-    reattention_tradeoff_list.extend(decay_tradeoffs)
-    return reattention_tradeoff_list
 
 
 def get_lr_for_epochs(training_configs: TrainingConfigs) -> List[float]:

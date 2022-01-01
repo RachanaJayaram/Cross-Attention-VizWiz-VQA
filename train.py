@@ -51,13 +51,6 @@ class TrainClass:
         if snapshot_path:
             self._load_model(snapshot_path)
 
-        self.rat_for_epochs = train_utils.get_reattention_tradeoff_for_epochs(
-            self.train_configs
-        )
-        self.logger.info(
-            "Reattention tradeoffs for epochs : %s", self.rat_for_epochs
-        )
-
         lr_for_epochs = train_utils.get_lr_for_epochs(self.train_configs)[
             self.train_configs.start_epoch :
         ]
@@ -74,24 +67,20 @@ class TrainClass:
             self.train_configs.start_epoch, self.train_configs.number_of_epochs
         ):
             self.logger.info(
-                "Training For Epoch: %d\tLearning rate = %.4f\tReattention tradeoff = %.4f",
+                "Training For Epoch: %d\tLearning rate = %.4f",
                 epoch,
                 self.scheduler.get_last_lr()[0],
-                self.rat_for_epochs[epoch],
             )
             epoch_start_time = time.time()
             train_size = len(train_loader.dataset)
 
-            total_loss, total_attention_loss, total_score = self._train_epoch(
-                train_loader, self.rat_for_epochs[epoch]
-            )
+            total_loss, total_score = self._train_epoch(train_loader)
 
             # Update learning rate. Skip updating in the last iteration.
             if epoch != self.train_configs.number_of_epochs - 1:
                 self.scheduler.step()
 
             total_loss /= train_size
-            total_attention_loss /= train_size
             total_score = 100 * total_score / train_size
             eval_score = 0
 
@@ -100,13 +89,11 @@ class TrainClass:
                 "train_size: %d,\t"
                 "time: %.2f,\t"
                 "train_loss: %.2f\t"
-                "attention_loss: %.4f\n"
                 "SCORE: %.4f\n\n",
                 epoch,
                 train_size,
                 time.time() - epoch_start_time,
                 total_loss,
-                total_attention_loss,
                 total_score,
             )
 
@@ -127,7 +114,7 @@ class TrainClass:
                 self.model.train(True)
                 self.logger.info("EVAL SCORE : %.4f\n\n", eval_score * 100)
 
-    def _train_epoch(self, train_loader, reattention_tradeoff):
+    def _train_epoch(self, train_loader):
         total_loss = 0
         total_score = 0
         total_attention_loss = 0
@@ -144,16 +131,9 @@ class TrainClass:
             image_features = Variable(image_features).to(self.device)
             question = Variable(question).to(self.device)
             labels = Variable(labels).to(self.device)
-            pred, v_att, v_re_att, _ = self.model(image_features, question)
+            pred, v_att, _ = self.model(image_features, question)
 
-            loss, att_loss = loss_utils.calculate_loss(
-                pred,
-                labels,
-                self.model.module.reattention_added(),
-                v_att,
-                v_re_att,
-                reattention_tradeoff,
-            )
+            loss = loss_utils.classification_loss(pred, labels)
 
             # Clearing old gradients.
             self.optimizer.zero_grad()
@@ -171,9 +151,8 @@ class TrainClass:
 
             total_loss += loss.data.item() * image_features.size(0)
             total_score += loss_utils.compute_score(pred, labels.data).sum()
-            total_attention_loss += att_loss * image_features.size(0)
 
-        return total_loss, total_attention_loss, total_score
+        return total_loss, total_score
 
     def _load_model(self, snapshot_path):
         model_data = torch.load(snapshot_path)
@@ -236,7 +215,7 @@ def evaluate(model, dataloader):
         image_features = image_features.cuda()
         question = question.cuda()
         labels = labels.cuda()
-        pred, _, _, _ = model(image_features, question)
+        pred = model(image_features, question)[0]
         batch_score = loss_utils.compute_score(pred, labels).sum()
         score += batch_score
         upper_bound += (labels.max(1)[0]).sum()

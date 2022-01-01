@@ -1,3 +1,5 @@
+"""Backend Server for Demo. 
+Loads pretrained model for inference."""
 import os
 import sys
 

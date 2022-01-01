@@ -60,58 +60,6 @@ def attention_consistency_loss(attention_weights, reattention_weights):
     )
 
 
-def calculate_loss(
-    logits,
-    labels,
-    was_reattended,
-    attention_weights,
-    reattention_weights,
-    reattention_factor=0.8,
-):
-    """Calculates joint loss.
-
-    Joint loss = classification_loss  + trade_off * attention_consistency_loss.
-    Ground truth soft scores for labels is calculated as per:
-    https://github.com/hengyuan-hu/bottom-up-attention-vqa/blob/master/tools/compute_softscore.py#L80
-    and http://visualqa.org/evaluation.html
-    Args:
-        logits:
-            Tensor containing predicted score for each answer candidiate
-            predicted. Scores are pre-sigmoid and not between 0 and 1.
-            Tensor is of dimension (batch size, answer vocabulary size).
-        labels:
-            Ground truth soft scores for each answer in the set of candidiate
-            answers.
-            Soft scores/ accuracies are between [0, 1].
-            Tensor is of dimension (batch size, answer vocabulary size).
-        was_reattended:
-            Boolean value indicating whether or not visual features were
-            reattended.
-        attention_weights:
-            visual attention weights learned in the attention layer, prior to
-            obtaining the answer representation.
-        reattention_weights:
-            visual attention weights learned in the re-attention layer.
-        reattention_factor:
-            Trade-off for the strength of answer guidance.
-
-    Returns:
-        A tuple.
-        The first element is the joint loss.
-        The second element is the attention consistency loss
-    """
-    return classification_loss(logits, labels) + (
-        reattention_factor
-        * attention_consistency_loss(attention_weights, reattention_weights)
-        if was_reattended
-        else 0
-    ), (
-        attention_consistency_loss(attention_weights, reattention_weights)
-        if was_reattended
-        else 0
-    )
-
-
 def compute_score(logits, labels):
     """Computes score of the prediction.
 

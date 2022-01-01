@@ -1,5 +1,5 @@
 """
-This code modified from Hengyuan Hu's repository.
+This code modified by Rachana Jayaram from Hengyuan Hu's repository.
 https://github.com/hengyuan-hu/bottom-up-attention-vqa
 GNU General Public License v3.0
 """

@@ -58,14 +58,13 @@ def get_logits(model, dataloader):
     ):
         image_features = image_features.cuda()
         question = question.cuda()
-        logits, _, _, _ = model(image_features, question)
+        logits, _, _ = model(image_features, question)
         pred[idx : idx + FLAGS.batch_size, :].copy_(logits.data)
         im_ids[idx : idx + FLAGS.batch_size] = list(image_ids) + [""] * (
             FLAGS.batch_size - len(image_ids)
         )
         idx += FLAGS.batch_size
-        # print(get_question(question.data[0], dataloader))
-        # print(get_answer(logits.data[0], dataloader))
+
     return pred, im_ids
 
 
@@ -95,7 +94,6 @@ def main(_):
 
     model_params = ModelParams(
         add_self_attention=FLAGS.add_self_attention,
-        add_reattention=FLAGS.add_reattention,
         fusion_method=FLAGS.fusion_method,
         question_sequence_length=dataset.MAX_QUES_SEQ_LEN,
         number_of_objects=dataset.NO_OBJECTS,

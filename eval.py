@@ -27,7 +27,6 @@ def main(_):
 
     model_params = ModelParams(
         add_self_attention=FLAGS.add_self_attention,
-        add_reattention=FLAGS.add_reattention,
         fusion_method=FLAGS.fusion_method,
         question_sequence_length=dataset.MAX_QUES_SEQ_LEN,
         number_of_objects=dataset.NO_OBJECTS,

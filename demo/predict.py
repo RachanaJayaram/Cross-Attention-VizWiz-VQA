@@ -29,7 +29,6 @@ class Inference:
         data_params = json.load(open(FLAGS.data_params_path))
         model_params = ModelParams(
             add_self_attention=FLAGS.add_self_attention,
-            add_reattention=FLAGS.add_reattention,
             fusion_method=FLAGS.fusion_method,
             question_sequence_length=dataset.MAX_QUES_SEQ_LEN,
             number_of_objects=dataset.NO_OBJECTS,
@@ -44,7 +43,7 @@ class Inference:
             hidden_dimension=FLAGS.hidden_dimension,
         ).cuda()
         FLAGS.snapshot_path = (
-            "/home/rachana/Documents/vizwiz/save_folder/self_cross_3/50"
+            "/home/rachana/Documents/vizwiz/save_folder/self_cross_3/final"
         )
         model_path = FLAGS.snapshot_path
         print("loading %s" % model_path)
@@ -67,7 +66,7 @@ class Inference:
         visual_feature = Variable(visual_feature).cuda()
         bboxes = Variable(bboxes).cuda()
         question = Variable(question).cuda()
-        pred, i_att, _, q_att = self.model(visual_feature, question)
+        pred, i_att, q_att = self.model(visual_feature, question)
         answer = self._get_answer(pred.data, demo_data_loader)
 
         return (

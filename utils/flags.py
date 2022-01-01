@@ -56,11 +56,6 @@ flags.DEFINE_bool(
     True,
     "Add self attention instead of Cross attention.",
 )
-flags.DEFINE_bool(
-    "add_reattention",
-    False,
-    "Determines whether reattention should be performed.",
-)
 
 flags.DEFINE_enum_class(
     "fusion_method",
@@ -75,7 +70,6 @@ flags.DEFINE_bool(
 flags.DEFINE_integer("seed", 1204, "Random seed.")
 flags.DEFINE_integer("hidden_dimension", 1024, "Dimension of hidden states.")
 flags.DEFINE_integer("number_of_epochs", 70, "Number of epochs for training.")
-flags.DEFINE_float("reattention_tradeoff", 0.5, "Reattention tradeoff.")
 
 flags.DEFINE_integer(
     "start_epoch", 0, "Epoch at which training should start/restart."
@@ -94,14 +88,7 @@ flags.DEFINE_float(
 flags.DEFINE_integer(
     "lr_decay_start", 50, "Epoch at which learning rate decay should start."
 )
-flags.DEFINE_float(
-    "ra_decay_factor",
-    0.7,
-    "Decay factor at which the reattention tradeoff is reduced.",
-)
-flags.DEFINE_integer(
-    "ra_decay_start", 70, "Epoch at which reattention decay should start."
-)
+
 flags.DEFINE_integer(
     "decay_step", 4, "Helps determine epochs for which decay is skipped."
 )

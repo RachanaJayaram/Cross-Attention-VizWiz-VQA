@@ -2,3 +2,4 @@ __pycache__
 save_folder/
 data/
 front_end/static/
+.vscode

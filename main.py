@@ -34,18 +34,14 @@ def main(_):
         warmup_factor=FLAGS.warmup_factor,
         lr_decay_factor=FLAGS.lr_decay_factor,
         lr_decay_start=FLAGS.lr_decay_start,
-        ra_decay_factor=FLAGS.ra_decay_factor,
-        ra_decay_start=FLAGS.ra_decay_start,
         decay_step=FLAGS.decay_step,
         save_score_threshold=FLAGS.save_score_threshold,
         save_step=FLAGS.save_step,
         grad_clip=FLAGS.grad_clip,
-        reattention_tradeoff=FLAGS.reattention_tradeoff,
     )
 
     model_params = ModelParams(
         add_self_attention=FLAGS.add_self_attention,
-        add_reattention=FLAGS.add_reattention,
         fusion_method=FLAGS.fusion_method,
         question_sequence_length=dataset.MAX_QUES_SEQ_LEN,
         number_of_objects=dataset.NO_OBJECTS,

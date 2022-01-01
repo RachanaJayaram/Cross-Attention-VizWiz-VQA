@@ -1,7 +1,7 @@
 """
 Copyright (c) Microsoft Corporation.
 Licensed under the MIT license.
-This code is modified by Linjie Li from Jin-Hwa Kim's repository.
+This code is modified by Rachana Jayaram from Jin-Hwa Kim's repository.
 https://github.com/jnhwkim/ban-vqa
 MIT License
 """
