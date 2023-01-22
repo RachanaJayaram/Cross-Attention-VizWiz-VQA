@@ -1,0 +1,189 @@
+
+html,body{
+
+    font-family:  'Nunito', sans-serif !important;
+    font-size: 16px;
+    }
+  #instructions
+  {
+    margin-top: 3%;
+    font-size: 13px;
+    color: #fff;
+    text-align: center;
+  
+  }
+  #full_window{
+    height: 100%;
+    align-content: center;
+    position: absolute;
+    width: 100%;
+  }
+  
+  #side_bar{
+    background-color: rgb(60, 188, 243);
+    color: #fff;
+    padding-top: 20px;
+    padding-left: 0.75%;
+    font-family:  'Nunito', sans-serif; 
+    font-weight: 100;
+    text-align: center;
+    
+  }
+  
+  
+  #main{
+    background-color: rgb(233, 234, 235);
+    color: #fff;
+    padding-top: 20px;
+    font-family:  'Nunito', sans-serif;
+    font-weight: 100;
+    
+  }
+  
+  #deets{
+    left:3px !important;
+    background-color:rgb(88, 198, 245);
+    font-size: 2px !important;
+    overflow: auto;
+  
+  }
+  #dashboard
+  {
+    padding: 30px;
+    font-size: 20px;
+    font-family: 'Nunito', sans-serif;
+    background-color: #fff;
+    color: #0091cd;
+    font-weight: lighter;
+  }
+  
+  tr td{
+    padding: 3px !important;
+    margin: 0 !important;
+  }
+    .card{
+    
+    margin-top: auto;
+    margin-bottom: auto;
+    background-color: rgba(3, 8, 75, 0.719);
+    justify-content: center;
+    padding: 15px;}
+    
+    
+    .card-header h2{
+    margin-top: 3.5%;
+    text-align: center;
+    color: white;
+    margin-bottom: 0%;
+    padding-bottom: 0%;
+    }
+    .card-body
+    {
+      margin-top: 0%;
+      padding-top: 0%;
+      top:0%;
+      color:white;
+    }
+    
+    .social_icon{
+    position: absolute;
+    right: 20px;
+    top: -45px;
+    }
+    
+    .input-group-prepend span{
+    width: 50px;
+    background-color: rgb(4, 10, 100);
+    color: white;
+    }
+    
+    input:focus{
+    outline: 0 0 0 0  !important;
+    box-shadow: 0 0 0 0 !important;
+    
+    }
+    input{
+      padding:3px;padding-top:0px;border-radius:3px;border:1px solid #a6aeb1 ;align-items: center;text-align: center; width: fit-content;
+    }
+    #seperator
+    {
+      color:rgb(255, 255, 255);
+      border: 1px solid rgb(255, 255, 255);
+    }
+    
+    
+    .btn{
+    color: white;
+    background-color: rgb(11, 105, 192);
+    width: fit-content;
+    }
+    
+    .btn:hover{
+    color: black;
+    background-color: white;
+    }
+    
+    .links{
+    color: white;
+    }
+    
+    .links a{
+    margin-left: 4px;
+    }
+
+  .form-group
+  {
+    text-align: center;
+    align-content: center;
+  }
+  .col-sm-6{
+    padding: 10px;
+    color: #2b2c2c;
+    box-shadow:         0px 1px 1px 1px #ccc;
+  }
+  .center {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    /* width: 50%; */
+  }
+
+  .model-box {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    margin-bottom: 3%;
+    background-color: #def2f8; 
+    border-radius: 2px; 
+    text-align: center;
+    align-content: center;
+    padding: 1%;
+  }
+
+  .model-name {
+    color: rgb(14, 30, 66);
+  }
+
+  .model-accuracy {
+    color: rgb(48, 48, 49);
+  }
+
+  .model-answer {
+    margin:auto;
+    padding: 3px;
+    width: 80%;  
+    background-color: rgb(255, 255, 255); 
+    border-radius: 2px;
+    font-size: large;
+    display:inline-block;
+    vertical-align: top;
+  }
+
+  h6 {
+    color: #494b4b;
+    font-size: large;
+  }
+
+  h1 {
+    font-family:'News Cycle', sans-serif;
+  }

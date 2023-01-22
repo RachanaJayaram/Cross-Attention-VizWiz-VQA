@@ -1,5 +1,10 @@
 __pycache__
 save_folder/
 data/
-front_end/static/
+*.png
+*.jpg
+*.json
+!*39.png
+!*39.jpg
+!*39.json
 .vscode
