@@ -92,4 +92,12 @@ Running the model against the eval split:
 python eval.py --use_train_and_val --add_self_attention=True --save_folder=<path_to_save_folder>  --snapshot_path=<path_to_trained_model>
 ```
 
+```
+
+To run the demo:
+
+- Add your images to `static/img`.
+- Use a [pretrained bottom-up attention model](https://github.com/airsplay/py-bottom-up-attention) to extract image features and save them in `data/Bottom-up-features-fixed/demo36.hdf5`.
+- Use the UI to ask questions on the fly.
+
 ---
