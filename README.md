@@ -1,6 +1,6 @@
 # Cross Attention with Self Attention for VizWiz-VQA
 
-> Visual Question Answering is a machine comprehension challenge wherein, provided a natural language question about an image, the system autonomously infers a natural language answer for the posed question.
+> Visual Question Answering is a machine comprehension challenge, wherein, provided a natural language question about an image, the system autonomously infers a natural language answer for the posed question.
 
 A self-evident application of the VQA task is to design systems that aid blind people with sight reliant queries. The VizWiz VQA dataset originates from images and questions compiled by members of the visually impaired community and as such, highlights some of the challenges presented by this particular use case
 
