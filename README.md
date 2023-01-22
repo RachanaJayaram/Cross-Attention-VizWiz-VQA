@@ -92,7 +92,6 @@ Running the model against the eval split:
 python eval.py --use_train_and_val --add_self_attention=True --save_folder=<path_to_save_folder>  --snapshot_path=<path_to_trained_model>
 ```
 
-```
 
 To run the demo:
 
