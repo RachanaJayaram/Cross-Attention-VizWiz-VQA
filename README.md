@@ -18,8 +18,8 @@ Our model addresses these challenges by employing a hybrid attention mechanism t
 Presented our work as a [poster](https://vizwiz.org/workshops/2021-workshop/#block-01231653-1998-4062-8e7e-18be269aad97) at <big>[2021 VizWiz Grand Challenge Workshop](https://vizwiz.org/workshops/2021-workshop) </big>
 
 - [CVPR 2021 Poster](https://ivc.ischool.utexas.edu/~yz9244/VizWiz_workshop_2021/poster_pdf/CrossAttSelfAtt_poster.pdf)
-- [Abstract Paper](https://ivc.ischool.utexas.edu/~yz9244/VizWiz_workshop_2021/poster_pdf/CrossAttSelfAtt_abstract.pdf)
-- [Teaser](https://ivc.ischool.utexas.edu/~yz9244/VizWiz_workshop_2021/videos/CrossAttSelfAtt_teaser.mp4)
+- [Abstract Paper](https://drive.google.com/file/d/1lHlCr3ZfQnZOHNWZ_-Z4z2OggKD_nkrV/view?usp=sharing)
+- [Teaser](https://drive.google.com/file/d/188xRY6y9XHBPZjGQa1ha2U5AotXLOjtu/view?usp=sharing)
 - [VizWiz VQA 2021 Leaderboard (_"RAC MODEL"_)](https://eval.ai/web/challenges/challenge-page/743/leaderboard/2020#leaderboardrank-4)
 
 ## ![Deep Attention Network Architecture](artefacts/workshop_poster.png)
